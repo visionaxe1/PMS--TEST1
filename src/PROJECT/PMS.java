@@ -11,6 +11,7 @@ import java.sql.SQLSyntaxErrorException;
 import java.util.Scanner;
 //这里开始写第七步的PMS方法
 
+//开发以及PMS系统2.0   custom数据与系统
 
 
 
@@ -29,18 +30,37 @@ return null;
     }
 
 
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+    }
 
 
 
+    public static Customer findCustomer(ArrayList<Customer> Customers, int customerId) {
 
+        for (Customer customer : Customers) {
 
+            if (customer.getId() == customerId) {
+                return customer;
+            }
+        }
+
+        return null;
+    }
 
     //开发26.10.23---开发房间的class类
    private int ID;
     private String RoomNumber;
     private int RentMoney;
     private String State;
-// 现在这里开始创建房间ROOM的类
+    private Customer customer;
+
+    // 现在这里开始创建房间ROOM的类
+
 
     public PMS (int ID, String RoomNumber, int RentMoney, String State) {
         this.ID = ID;
@@ -86,6 +106,21 @@ return null;
 
         public static void main(String[] args) {
             PMS room1 = new PMS(1, "A101", 2500, "availble");
+            Customer booker = new Customer(
+                    1,
+                    "Devin Booker",
+                    "18729879322"
+            );
+
+            room1.setCustomer(booker);
+            room1.SetterState("occupied");
+
+            System.out.println("房间：" + room1.GetterRoomNumber());
+            System.out.println("租客：" + room1.getCustomer().getName());
+            System.out.println("电话：" + room1.getCustomer().getPhone());
+
+
+
             System.out.println(room1.GetterID());
 //test finish 成功取得了第一个ID 现在开始开发第二步 --- 创造多个room
             PMS room2 = new PMS(2, "A102", 2900, "occuiped");
@@ -175,6 +210,24 @@ return null;
 //开发任务12---- 用switch编译出PMS系统的操作台
 
             //开发任务17 ---- while
+
+            Customer customer2 = new Customer(2, "Stephen Curry", "18729879323");
+            Customer customer3 = new Customer(3, "LeBron James", "18729879324");
+
+            ArrayList<Customer> Customers = new ArrayList<>();
+
+
+            Customers.add(customer2);
+            Customers.add(customer3);
+
+
+
+
+
+
+
+
+
             while(true){      //只要括号里的条件是 true，就一直重复执行 {} 里面的代码
 
 
@@ -215,33 +268,75 @@ return null;
                             System.out.println(room.GetterRoomNumber());
                             System.out.println(room.GetterRentMoney());
                         }
-                        break;
+
                     }
 
 
                     break;
                 case 3:       //开发任务15 CASE 3
                     System.out.println("你选择了办理入住");
-                    System.out.println("请输入你想入住的房间");
+                    System.out.println("请输入您要办理入住的房间号：");
+
                     String CheckInRoomNumber = RoomScanner.nextLine();
 
                     PMS CheckInRoom = findroom(Rooms, CheckInRoomNumber);
 
-                    if (CheckInRoom != null) {
-
-                        if (CheckInRoom.GettterState().equals("occupied")) {
-                            System.out.println("抱歉，你输入的房间已经入住");
-                        } else {
-                            CheckInRoom.SetterState("occupied");
-
-                            System.out.println("房间号：" + CheckInRoom.GetterRoomNumber());
-                            System.out.println("租金：" + CheckInRoom.GetterRentMoney());
-                            System.out.println("您已经办理入住成功！");
-                        }
-
-                    } else {
-                        System.out.println("没有找到该房间");
+                    // 第一步：判断房间是否存在
+                    if (CheckInRoom == null) {
+                        System.out.println("房间不存在！");
+                        break;
                     }
+
+                    // 第二步：判断房间是否空闲
+                    if (!CheckInRoom.GettterState().equals("available")) {
+                        System.out.println("该房间当前不可办理入住！");
+                        break;
+                    }
+
+                    // 第三步：输入租客 ID
+                    System.out.println("请输入租客ID：");
+
+                    int customerId = RoomScanner.nextInt();
+                    RoomScanner.nextLine();
+
+                    // 第四步：查找租客
+                    Customer CheckInCustomer = findCustomer(Customers, customerId);
+
+                    if (CheckInCustomer == null) {
+                        System.out.println("客户不存在，无法办理入住！");
+                        break;
+                    }
+
+                    // 第五步：检查租客是否已经入住其他房间
+                    boolean alreadyCheckedIn = false;
+
+                    for (PMS room : Rooms) {
+                        if (room.getCustomer() != null
+                                && room.getCustomer().getId() == customerId) {
+                            alreadyCheckedIn = true;
+                            break;
+                        }
+                    }
+
+                    if (alreadyCheckedIn) {
+                        System.out.println("该客户已经入住其他房间！");
+                        break;
+                    }
+
+                    // 第六步：绑定租客和房间
+                    CheckInRoom.setCustomer(CheckInCustomer);
+                    CheckInRoom.SetterState("occupied");
+
+                    // 第七步：输出入住信息
+                    System.out.println("========== 入住成功 ==========");
+                    System.out.println("房间号：" + CheckInRoom.GetterRoomNumber());
+                    System.out.println("房间租金：" + CheckInRoom.GetterRentMoney());
+                    System.out.println("租客ID：" + CheckInCustomer.getId());
+                    System.out.println("租客姓名：" + CheckInCustomer.getName());
+                    System.out.println("联系电话：" + CheckInCustomer.getPhone());
+                    System.out.println("房间状态：" + CheckInRoom.GettterState());
+                    System.out.println("============================");
+
 
                     break;
 
@@ -255,12 +350,22 @@ return null;
                     if (CheckOutRoom != null) {
                         if (CheckOutRoom.GettterState().equals("availble")) {
                             System.out.println("抱歉 该房间空闲 无法办理退房 请重新输入您的房间号");
+                            if (CheckOutRoom.getCustomer() != null) {
+                                System.out.println(room1.getCustomer().getName());
+                            } else {
+                                System.out.println("当前房间没有租客");
+                            }
+
+
+
 
                         } else {
                             CheckOutRoom.SetterState("availble");
 
                             System.out.println("房间号：" + CheckOutRoom.GetterRoomNumber());
                             System.out.println("租金：" + CheckOutRoom.GetterRentMoney());
+                            CheckOutRoom.setCustomer(null);
+
                             System.out.println("您已经办退房成功！");
 
 
@@ -284,9 +389,9 @@ return;
             //开发任务17 switch 和 while
 
 
+//开发任务18 --- 客户方面的get与set
 
-
-
+//创造一个 list 去包含第一个custom的信息
 
 
 
